@@ -57,7 +57,7 @@ public class DeliveryTimeResource {
     @GET
     @Path("/{deliveryId}")
     public Response getDeliveryTime(@Parameter(description = "Metadata ID.", required = true)
-                                        @PathParam("deliveryId") Integer imageMetadataId) {
+                                        @PathParam("deliveryId") Integer deliveryId) {
 
 //        DeliveryMetadata deliveryMetadata = deliveryMetadataBean.getDeliveryMetadata(imageMetadataId);
 //
