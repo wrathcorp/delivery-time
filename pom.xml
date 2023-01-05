@@ -13,7 +13,6 @@
     <modules>
         <module>api</module>
         <module>services</module>
-        <module>lib</module>
     </modules>
 
     <properties>
@@ -83,12 +82,6 @@
             <dependency>
                 <groupId>rso.project.delivery</groupId>
                 <artifactId>delivery-services</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>rso.project.delivery</groupId>
-                <artifactId>delivery-lib</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

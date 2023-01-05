@@ -7,7 +7,6 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
-import rso.project.delivery.lib.DeliveryTimeMetadata;
 import rso.project.delivery.services.clients.DeliveryTimeClient;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -38,7 +37,7 @@ public class DeliveryTimeResource {
             @APIResponse(responseCode = "200",
                     description = "Delivery time",
                     content = @Content(
-                            schema = @Schema(implementation = DeliveryTimeMetadata.class))
+                            schema = @Schema(implementation = double.class))
             )})
     @GET
     @Path("/{deliveryId}")
@@ -47,12 +46,7 @@ public class DeliveryTimeResource {
         Object distanceKmObj = deliveryTimeClient.CalculateDistance(deliveryId);
         if (distanceKmObj != null) {
             double distanceKm = (double) distanceKmObj;
-            DeliveryTimeMetadata metadata = new DeliveryTimeMetadata();
-            metadata.setDeliveryId(deliveryId);
-            metadata.setDeliveryDistanceKm(distanceKm);
-            System.out.println("Distance from location to destination location: " + distanceKm + " km");
-
-            return Response.status(Response.Status.OK).entity(metadata).build();
+            return Response.status(Response.Status.OK).entity(distanceKm).build();
         } else {
             return Response.status(Response.Status.REQUEST_TIMEOUT).build();
         }
