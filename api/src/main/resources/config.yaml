@@ -50,7 +50,7 @@ rest-properties:
 app-properties:
   delivery-time-client:
     geocoder-key: be886d430eead1e57fd5c3db1f805ded
-    rapidapi-key: 197be5d856mshf891aa29c50ec04p1d3d61jsna8cb6a927b9b
+    distance-key: 197be5d856mshf891aa29c50ec04p1d3d61jsna8cb6a927b9b
 
 #kumuluzee.name
 #KUMULUEE_NAME

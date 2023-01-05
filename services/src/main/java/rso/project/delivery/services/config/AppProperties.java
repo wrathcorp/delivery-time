@@ -14,9 +14,8 @@ public class AppProperties {
     @ConfigValue("delivery-time-client.geocoder-key")
     private String geocoderKey;
 
-    @ConfigValue("delivery-time-client.rapidapi-key")
-
-    private String rapidapiKey;
+    @ConfigValue("delivery-time-client.distance-key")
+    private String distanceKey;
 
     public String getGeocoderKey() {
         return geocoderKey;
@@ -26,11 +25,11 @@ public class AppProperties {
         this.geocoderKey = geocoderKey;
     }
 
-    public String getRapidapiKey() {
-        return rapidapiKey;
+    public String getDistanceKey() {
+        return distanceKey;
     }
 
-    public void setRapidapiKey(String rapidapiKey) {
-        this.rapidapiKey = rapidapiKey;
+    public void setDistanceKey(String distanceKey) {
+        this.distanceKey = distanceKey;
     }
 }
