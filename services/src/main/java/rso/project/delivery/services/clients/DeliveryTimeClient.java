@@ -6,6 +6,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
+import org.eclipse.microprofile.faulttolerance.Fallback;
+import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import rso.project.delivery.services.config.AppProperties;
@@ -15,12 +18,13 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.temporal.ChronoUnit;
 
 @ApplicationScoped
 public class DeliveryTimeClient {
     HttpGet httpGetDistance = new HttpGet("https://distance-calculator8.p.rapidapi.com/calc");
     HttpGet httpGetGeocoder = new HttpGet("http://api.positionstack.com/v1/forward");
-    HttpGet httpGetDelivery = new HttpGet("http://localhost:8080/v1/deliveries");
+    HttpGet httpGetDelivery = new HttpGet("http://localhost:8080/v1/deliveries"); // demo (not final)
     @Inject
     private AppProperties appProperties;
     private HttpClient httpClient;
@@ -37,17 +41,16 @@ public class DeliveryTimeClient {
         httpGetDistance.addHeader("X-RapidAPI-Host", "distance-calculator8.p.rapidapi.com");
     }
 
-    public void GeocodeAddresses(int deliveryId) {
+    public boolean GeocodeAddresses(int deliveryId) {
         Object location;
         Object destinationLocation;
         try {
-            httpGetDelivery.setURI(new URIBuilder(httpGetDelivery.getURI() + "/" + deliveryId).build());
-
-            response = httpClient.execute(httpGetDelivery);
+            HttpGet tmpHttpGetDelivery = new HttpGet(new URIBuilder(httpGetDelivery.getURI() + "/" + deliveryId).build());
+            response = httpClient.execute(tmpHttpGetDelivery);
             JSONObject jsonObject = new JSONObject(EntityUtils.toString(response.getEntity()));
 
             location = jsonObject.get("location");
-            Object restaurantLocation = jsonObject.get("restaurantLocation");
+            Object restaurantLocation = jsonObject.get("restaurantLocation"); // todo
             destinationLocation = jsonObject.get("destinationLocation");
 
             System.out.println("Locations got: " + location + " " + restaurantLocation + " " + destinationLocation);
@@ -68,6 +71,11 @@ public class DeliveryTimeClient {
         } catch (URISyntaxException | IOException e) {
             throw new RuntimeException(e);
         }
+        return true;
+    }
+
+    public Object fallbackMethod(int deliveryId) {
+        return null;
     }
 
     private Object[] GetGeolocation(Object location) throws URISyntaxException, IOException {
@@ -84,20 +92,27 @@ public class DeliveryTimeClient {
         return new Object[]{latitude, longitude};
     }
 
-    public double CalculateDistance() {
-        try {
-            httpGetDistance.setURI(new URIBuilder(httpGetDistance.getURI())
-                    .addParameter("startLatitude", locationLatitude.toString())
-                    .addParameter("startLongitude", locationLongitude.toString())
-                    .addParameter("endLatitude", destinationLocationLatitude.toString())
-                    .addParameter("endLongitude", destinationLocationLongitude.toString())
-                    .build());
+    @Timeout(value = 8, unit = ChronoUnit.SECONDS)
+    @CircuitBreaker(requestVolumeThreshold = 10)
+    @Fallback(fallbackMethod = "fallbackMethod")
+    public Object CalculateDistance(int deliveryId) {
+        if (GeocodeAddresses(deliveryId)) {
+            try {
+                httpGetDistance.setURI(new URIBuilder(httpGetDistance.getURI())
+                        .addParameter("startLatitude", locationLatitude.toString())
+                        .addParameter("startLongitude", locationLongitude.toString())
+                        .addParameter("endLatitude", destinationLocationLatitude.toString())
+                        .addParameter("endLongitude", destinationLocationLongitude.toString())
+                        .build());
 
-            response = httpClient.execute(httpGetDistance);
-            JSONObject jsonObject = new JSONObject(EntityUtils.toString(response.getEntity()));
-            return (double) jsonObject.getJSONObject("body").getJSONObject("distance").get("kilometers");
-        } catch (URISyntaxException | IOException e) {
-            throw new RuntimeException(e);
+                response = httpClient.execute(httpGetDistance);
+                JSONObject jsonObject = new JSONObject(EntityUtils.toString(response.getEntity()));
+                return jsonObject.getJSONObject("body").getJSONObject("distance").get("kilometers");
+            } catch (URISyntaxException | IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return null;
         }
     }
 }

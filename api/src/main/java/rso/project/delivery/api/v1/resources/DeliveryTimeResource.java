@@ -44,14 +44,17 @@ public class DeliveryTimeResource {
     @Path("/{deliveryId}")
     public Response getDeliveryTime(@Parameter(description = "Metadata ID.", required = true)
                                     @PathParam("deliveryId") Integer deliveryId) {
-        deliveryTimeClient.GeocodeAddresses(deliveryId);
-        double distanceKm = deliveryTimeClient.CalculateDistance();
-        System.out.println("Distance from location to destination location: " + distanceKm + " km");
+        Object distanceKmObj = deliveryTimeClient.CalculateDistance(deliveryId);
+        if (distanceKmObj != null) {
+            double distanceKm = (double) distanceKmObj;
+            DeliveryTimeMetadata metadata = new DeliveryTimeMetadata();
+            metadata.setDeliveryId(deliveryId);
+            metadata.setDeliveryDistanceKm(distanceKm);
+            System.out.println("Distance from location to destination location: " + distanceKm + " km");
 
-        DeliveryTimeMetadata metadata = new DeliveryTimeMetadata();
-        metadata.setDeliveryId(deliveryId);
-        metadata.setDeliveryDistanceKm(distanceKm);
-
-        return Response.status(Response.Status.OK).entity(metadata).build();
+            return Response.status(Response.Status.OK).entity(metadata).build();
+        } else {
+            return Response.status(Response.Status.REQUEST_TIMEOUT).build();
+        }
     }
 }
